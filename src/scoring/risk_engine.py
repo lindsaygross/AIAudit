@@ -377,10 +377,14 @@ def generate_executive_summary(
     intake: AISystemIntake,
     risk_score: float,
     risk_category: str,
-    obligations: List[ComplianceObligation]
+    obligations: List[ComplianceObligation],
+    recommendations: List[str] = None
 ) -> str:
     """Generate executive summary for leadership."""
     high_priority_count = len([o for o in obligations if o.priority == "high"])
+    medium_priority_count = len([o for o in obligations if o.priority == "medium"])
+    total_obligations = len(obligations)
+    recommendation_count = len(recommendations) if recommendations else 0
 
     if risk_category == "high_risk":
         summary = (
@@ -395,13 +399,14 @@ def generate_executive_summary(
             f"**{intake.system_name}** has been assessed as MEDIUM RISK. "
             f"While not classified as high-risk under Annex III, the system should implement "
             f"transparency measures and documentation best practices. "
-            f"There are {high_priority_count} recommended actions to improve compliance posture."
+            f"There are {total_obligations} compliance obligations and {recommendation_count} recommended actions to improve compliance posture."
         )
     else:
         summary = (
             f"**{intake.system_name}** has been assessed as LOW RISK. "
             f"Minimal regulatory obligations apply, but consider adopting voluntary "
-            f"codes of conduct and maintaining basic documentation for good governance."
+            f"codes of conduct and maintaining basic documentation for good governance. "
+            f"There are {recommendation_count} suggested improvements."
         )
 
     return summary
@@ -450,7 +455,7 @@ def assess_intake_form(
     documentation_gaps = compute_documentation_gaps(intake)
     obligations = generate_obligations(final_score, intake)
     recommendations = generate_key_recommendations(final_score, factors, documentation_gaps)
-    executive_summary = generate_executive_summary(intake, final_score, risk_category, obligations)
+    executive_summary = generate_executive_summary(intake, final_score, risk_category, obligations, recommendations)
 
     # Generate assessment ID
     assessment_id = hashlib.sha256(

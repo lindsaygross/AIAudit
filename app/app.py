@@ -2,7 +2,7 @@
 AIAudit - EU AI Act Compliance Assessment Tool
 
 A clean, professional interface for assessing AI systems against EU AI Act requirements.
-Design inspired by lovable.dev's minimal, sophisticated aesthetic.
+Modern white design inspired by Linear, Vercel, and Stripe dashboards.
 
 Usage:
     streamlit run app/app.py
@@ -22,12 +22,12 @@ API_URL = os.environ.get("API_URL", "http://127.0.0.1:8000")
 # Page config
 st.set_page_config(
     page_title="AIAudit - EU AI Act Compliance",
-    page_icon="⚖️",
+    page_icon="A",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# Modern, clean CSS inspired by lovable.dev
+# Modern, clean CSS - White background with floating cards
 st.markdown("""
 <style>
     /* Import clean font */
@@ -38,15 +38,15 @@ st.markdown("""
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
 
-    /* Main app background */
+    /* Main app background - Clean white */
     .stApp {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: #FFFFFF;
     }
 
     /* Main container */
     .main .block-container {
-        max-width: 1200px;
-        padding: 3rem 2rem;
+        max-width: 900px;
+        padding: 2rem 2rem;
         margin: 0 auto;
     }
 
@@ -56,78 +56,97 @@ st.markdown("""
     header {visibility: hidden;}
     .stDeployButton {visibility: hidden;}
 
-    /* Typography - Light text on dark gradient background */
+    /* Typography */
     h1 {
-        color: #FFFFFF !important;
-        font-weight: 700 !important;
-        font-size: 2.5rem !important;
-        margin-bottom: 0.5rem !important;
+        color: #1a1a1a !important;
+        font-weight: 600 !important;
+        font-size: 1.75rem !important;
+        margin-bottom: 0.25rem !important;
         letter-spacing: -0.02em !important;
     }
 
     h2 {
-        color: #1F2937 !important;
+        color: #1a1a1a !important;
         font-weight: 600 !important;
-        font-size: 1.5rem !important;
-        margin-top: 2rem !important;
-        margin-bottom: 1rem !important;
-    }
-
-    h3 {
-        color: #374151 !important;
-        font-weight: 600 !important;
-        font-size: 1.125rem !important;
+        font-size: 1rem !important;
         margin-top: 1.5rem !important;
         margin-bottom: 0.75rem !important;
     }
 
-    /* Subtitle styling - Light text for header area */
-    .subtitle {
-        color: rgba(255, 255, 255, 0.9) !important;
-        font-size: 1.125rem !important;
-        font-weight: 400 !important;
-        margin-bottom: 2rem !important;
+    h3 {
+        color: #1a1a1a !important;
+        font-weight: 600 !important;
+        font-size: 0.875rem !important;
+        margin-top: 1rem !important;
+        margin-bottom: 0.5rem !important;
     }
 
-    /* Status badge in header */
+    /* Subtitle styling */
+    .subtitle {
+        color: #666666 !important;
+        font-size: 0.9375rem !important;
+        font-weight: 400 !important;
+        margin-bottom: 1.5rem !important;
+    }
+
+    /* Top nav bar */
+    .nav-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem 0;
+        border-bottom: 1px solid #e5e5e5;
+        margin-bottom: 2rem;
+    }
+
+    .nav-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #1a1a1a;
+    }
+
+    /* Status badge */
     .status-badge {
         display: inline-flex;
         align-items: center;
         gap: 0.5rem;
-        background: rgba(255, 255, 255, 0.2);
-        backdrop-filter: blur(10px);
-        color: #FFFFFF;
-        padding: 0.5rem 1rem;
-        border-radius: 24px;
-        font-size: 0.875rem;
+        background: #FFFFFF;
+        color: #666666;
+        padding: 0.375rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
         font-weight: 500;
-        border: 1px solid rgba(255, 255, 255, 0.3);
+        border: 1px solid #e5e5e5;
     }
 
     .status-dot {
-        width: 8px;
-        height: 8px;
-        background: #10B981;
+        width: 6px;
+        height: 6px;
+        background: #22c55e;
         border-radius: 50%;
-        animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.5; }
     }
 
     .status-offline .status-dot {
-        background: #EF4444;
+        background: #ef4444;
     }
 
-    /* Main content card */
-    .content-card {
+    /* Floating card styles */
+    .card {
         background: #FFFFFF;
-        border-radius: 20px;
-        padding: 2.5rem;
-        margin-top: 2rem;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        border: 1px solid #e5e5e5;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+
+    .card-header {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #1a1a1a;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid #f0f0f0;
     }
 
     /* Form styling */
@@ -135,28 +154,27 @@ st.markdown("""
     .stTextArea > div > div > textarea,
     .stSelectbox > div > div,
     .stMultiSelect > div > div {
-        background: #F9FAFB !important;
-        border: 1.5px solid #E5E7EB !important;
-        border-radius: 10px !important;
-        color: #111827 !important;
-        font-size: 0.9375rem !important;
-        padding: 0.75rem 1rem !important;
-        transition: all 0.2s ease !important;
+        background: #FFFFFF !important;
+        border: 1px solid #e5e5e5 !important;
+        border-radius: 8px !important;
+        color: #1a1a1a !important;
+        font-size: 0.875rem !important;
+        padding: 0.625rem 0.875rem !important;
+        transition: all 0.15s ease !important;
     }
 
     .stTextInput > div > div > input:focus,
     .stTextArea > div > div > textarea:focus {
-        border-color: #667eea !important;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
-        background: #FFFFFF !important;
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
     }
 
     .stTextInput > div > div > input::placeholder,
     .stTextArea > div > div > textarea::placeholder {
-        color: #9CA3AF !important;
+        color: #9ca3af !important;
     }
 
-    /* Labels - Dark text on white background */
+    /* Labels */
     .stTextInput > label,
     .stTextArea > label,
     .stSelectbox > label,
@@ -165,211 +183,173 @@ st.markdown("""
     .stCheckbox > label {
         color: #374151 !important;
         font-weight: 500 !important;
-        font-size: 0.9375rem !important;
-        margin-bottom: 0.5rem !important;
+        font-size: 0.8125rem !important;
+        margin-bottom: 0.375rem !important;
     }
 
     /* Radio buttons */
     .stRadio > div {
-        gap: 0.5rem;
+        gap: 0.375rem;
     }
 
     .stRadio > div > label {
-        background: #F9FAFB !important;
-        border: 1.5px solid #E5E7EB !important;
-        border-radius: 10px !important;
-        padding: 0.875rem 1rem !important;
-        margin: 0.25rem 0 !important;
+        background: #FFFFFF !important;
+        border: 1px solid #e5e5e5 !important;
+        border-radius: 8px !important;
+        padding: 0.625rem 0.875rem !important;
+        margin: 0.125rem 0 !important;
         color: #374151 !important;
-        transition: all 0.2s ease !important;
+        font-size: 0.8125rem !important;
+        transition: all 0.15s ease !important;
     }
 
     .stRadio > div > label:hover {
-        background: #F3F4F6 !important;
-        border-color: #667eea !important;
-    }
-
-    .stRadio > div > label[data-checked="true"] {
-        background: #EEF2FF !important;
-        border-color: #667eea !important;
-        color: #4338CA !important;
+        background: #f9fafb !important;
+        border-color: #3b82f6 !important;
     }
 
     /* Checkboxes */
     .stCheckbox {
-        margin-top: 0.5rem;
+        margin-top: 0.375rem;
     }
 
     .stCheckbox > label {
         color: #374151 !important;
         font-weight: 400 !important;
+        font-size: 0.8125rem !important;
     }
 
     /* Primary button */
-    .stButton > button[kind="primary"],
-    .stButton > button:not([kind]) {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    .stButton > button {
+        background: #3b82f6 !important;
         color: #FFFFFF !important;
         border: none !important;
-        border-radius: 10px !important;
-        padding: 0.875rem 2rem !important;
-        font-weight: 600 !important;
-        font-size: 1rem !important;
-        transition: all 0.2s ease !important;
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3) !important;
+        border-radius: 8px !important;
+        padding: 0.625rem 1.25rem !important;
+        font-weight: 500 !important;
+        font-size: 0.875rem !important;
+        transition: all 0.15s ease !important;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
     }
 
-    .stButton > button[kind="primary"]:hover,
-    .stButton > button:not([kind]):hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4) !important;
-    }
-
-    .stButton > button[kind="primary"]:active,
-    .stButton > button:not([kind]):active {
-        transform: translateY(0);
+    .stButton > button:hover {
+        background: #2563eb !important;
+        box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2) !important;
     }
 
     /* Download button */
     .stDownloadButton > button {
         background: #FFFFFF !important;
         color: #374151 !important;
-        border: 1.5px solid #E5E7EB !important;
-        border-radius: 10px !important;
-        padding: 0.875rem 2rem !important;
+        border: 1px solid #e5e5e5 !important;
+        border-radius: 8px !important;
+        padding: 0.625rem 1.25rem !important;
         font-weight: 500 !important;
-        font-size: 1rem !important;
-        transition: all 0.2s ease !important;
+        font-size: 0.875rem !important;
+        transition: all 0.15s ease !important;
     }
 
     .stDownloadButton > button:hover {
-        background: #F9FAFB !important;
-        border-color: #667eea !important;
-        color: #667eea !important;
+        background: #f9fafb !important;
+        border-color: #3b82f6 !important;
+        color: #3b82f6 !important;
     }
 
     /* Score display */
     .score-container {
-        background: linear-gradient(135deg, #F9FAFB 0%, #FFFFFF 100%);
-        border: 2px solid #E5E7EB;
-        border-radius: 20px;
-        padding: 3rem 2rem;
+        background: #FFFFFF;
+        border: 1px solid #e5e5e5;
+        border-radius: 12px;
+        padding: 2rem 1.5rem;
         text-align: center;
-        margin: 2rem 0;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .score-container::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        margin: 1.5rem 0;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     }
 
     .score-value {
-        font-size: 4rem;
+        font-size: 3rem;
         font-weight: 700;
         line-height: 1;
-        margin-bottom: 1rem;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        margin-bottom: 0.75rem;
+        color: #3b82f6;
     }
 
     .score-value.high-risk {
-        background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        color: #ef4444;
     }
 
     .score-value.medium-risk {
-        background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        color: #f59e0b;
     }
 
     .score-value.low-risk {
-        background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        color: #22c55e;
     }
 
     .score-label {
         display: inline-block;
-        padding: 0.5rem 1.5rem;
-        border-radius: 24px;
-        font-size: 0.875rem;
+        padding: 0.375rem 1rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.05em;
     }
 
     .label-high {
-        background: #FEE2E2;
-        color: #DC2626;
+        background: #fef2f2;
+        color: #dc2626;
     }
 
     .label-medium {
-        background: #FEF3C7;
-        color: #D97706;
+        background: #fffbeb;
+        color: #d97706;
     }
 
     .label-low {
-        background: #D1FAE5;
-        color: #059669;
+        background: #f0fdf4;
+        color: #16a34a;
     }
 
     /* Summary box */
     .summary-box {
-        background: linear-gradient(135deg, #F9FAFB 0%, #FFFFFF 100%);
-        border: 1.5px solid #E5E7EB;
-        border-radius: 12px;
-        padding: 1.5rem;
+        background: #f9fafb;
+        border: 1px solid #e5e5e5;
+        border-radius: 8px;
+        padding: 1rem 1.25rem;
         color: #374151;
-        font-size: 1rem;
-        line-height: 1.7;
-        margin: 1.5rem 0;
+        font-size: 0.875rem;
+        line-height: 1.6;
+        margin: 1rem 0;
     }
 
-    /* Article violation cards */
+    /* Violation cards */
     .violation-card {
         background: #FFFFFF;
-        border: 1.5px solid #E5E7EB;
-        border-radius: 12px;
-        padding: 1.25rem 1.5rem;
-        margin-bottom: 1rem;
+        border: 1px solid #e5e5e5;
+        border-radius: 8px;
+        padding: 1rem 1.25rem;
+        margin-bottom: 0.75rem;
         display: flex;
         align-items: flex-start;
         gap: 1rem;
-        transition: all 0.2s ease;
+        transition: all 0.15s ease;
     }
 
     .violation-card:hover {
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        transform: translateY(-2px);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
     }
 
     .violation-card.high {
-        border-left: 4px solid #EF4444;
-        background: linear-gradient(90deg, #FEF2F2 0%, #FFFFFF 100%);
+        border-left: 3px solid #ef4444;
     }
 
     .violation-card.medium {
-        border-left: 4px solid #F59E0B;
-        background: linear-gradient(90deg, #FFFBEB 0%, #FFFFFF 100%);
+        border-left: 3px solid #f59e0b;
     }
 
     .violation-card.low {
-        border-left: 4px solid #10B981;
-        background: linear-gradient(90deg, #ECFDF5 0%, #FFFFFF 100%);
+        border-left: 3px solid #22c55e;
     }
 
     .violation-content {
@@ -378,58 +358,58 @@ st.markdown("""
 
     .violation-title {
         font-weight: 600;
-        color: #111827;
-        font-size: 1rem;
-        margin-bottom: 0.375rem;
+        color: #1a1a1a;
+        font-size: 0.875rem;
+        margin-bottom: 0.25rem;
     }
 
     .violation-description {
-        color: #6B7280;
-        font-size: 0.875rem;
-        line-height: 1.6;
+        color: #666666;
+        font-size: 0.8125rem;
+        line-height: 1.5;
     }
 
     .violation-badge {
-        font-size: 0.875rem;
-        font-weight: 700;
-        padding: 0.5rem 0.875rem;
-        border-radius: 8px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.375rem 0.625rem;
+        border-radius: 6px;
         white-space: nowrap;
-        min-width: 60px;
+        min-width: 48px;
         text-align: center;
     }
 
     .badge-high {
-        background: #FEE2E2;
-        color: #DC2626;
+        background: #fef2f2;
+        color: #dc2626;
     }
 
     .badge-medium {
-        background: #FEF3C7;
-        color: #D97706;
+        background: #fffbeb;
+        color: #d97706;
     }
 
     .badge-low {
-        background: #D1FAE5;
-        color: #059669;
+        background: #f0fdf4;
+        color: #16a34a;
     }
 
     /* Action list */
     .action-list {
         list-style: none;
         padding: 0;
-        margin: 1rem 0;
+        margin: 0.75rem 0;
     }
 
     .action-item {
         display: flex;
         align-items: flex-start;
-        gap: 1rem;
-        padding: 1rem;
-        border-bottom: 1px solid #F3F4F6;
+        gap: 0.75rem;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #f0f0f0;
         color: #374151;
-        font-size: 0.9375rem;
-        line-height: 1.6;
+        font-size: 0.8125rem;
+        line-height: 1.5;
     }
 
     .action-item:last-child {
@@ -440,12 +420,12 @@ st.markdown("""
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 2rem;
-        height: 2rem;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        width: 1.5rem;
+        height: 1.5rem;
+        background: #3b82f6;
         color: #FFFFFF;
         border-radius: 50%;
-        font-size: 0.875rem;
+        font-size: 0.75rem;
         font-weight: 600;
         flex-shrink: 0;
     }
@@ -453,12 +433,8 @@ st.markdown("""
     /* Divider */
     hr {
         border: none;
-        border-top: 1.5px solid rgba(255, 255, 255, 0.3);
-        margin: 2rem 0;
-    }
-
-    .content-card hr {
-        border-top: 1.5px solid #E5E7EB;
+        border-top: 1px solid #e5e5e5;
+        margin: 1.5rem 0;
     }
 
     /* Form container */
@@ -470,82 +446,51 @@ st.markdown("""
 
     /* Spinner */
     .stSpinner > div {
-        border-top-color: #667eea !important;
-    }
-
-    /* Section headers */
-    .section-header {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        margin: 2rem 0 1rem 0;
-    }
-
-    .section-icon {
-        width: 32px;
-        height: 32px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 1.125rem;
+        border-top-color: #3b82f6 !important;
     }
 
     /* Info cards */
     .info-card {
-        background: #F9FAFB;
-        border: 1.5px solid #E5E7EB;
-        border-radius: 12px;
-        padding: 1rem 1.25rem;
+        background: #f9fafb;
+        border: 1px solid #e5e5e5;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
         color: #374151;
-        font-size: 0.875rem;
-        line-height: 1.6;
-        margin: 1rem 0;
+        font-size: 0.8125rem;
+        line-height: 1.5;
+        margin: 0.5rem 0;
     }
 
-    .info-card strong {
-        color: #111827;
+    /* Select dropdown text */
+    [data-baseweb="select"] > div,
+    [data-baseweb="select"] span,
+    .stSelectbox div[data-baseweb="select"] div {
+        color: #1a1a1a !important;
+    }
+
+    /* Multi-select tags */
+    [data-baseweb="tag"] {
+        background-color: #eff6ff !important;
+        color: #1d4ed8 !important;
     }
 
     /* Responsive adjustments */
     @media (max-width: 768px) {
         .main .block-container {
-            padding: 2rem 1rem;
+            padding: 1.5rem 1rem;
         }
 
         h1 {
-            font-size: 2rem !important;
+            font-size: 1.5rem !important;
         }
 
         .score-value {
-            font-size: 3rem;
+            font-size: 2.5rem;
         }
 
-        .content-card {
-            padding: 1.5rem;
+        .card {
+            padding: 1.25rem;
         }
-    }
-
-    /* Select dropdown text - ensure dark text */
-    [data-baseweb="select"] > div,
-    [data-baseweb="select"] span,
-    .stSelectbox div[data-baseweb="select"] div {
-        color: #111827 !important;
-    }
-
-    /* Multi-select tags */
-    [data-baseweb="tag"] {
-        background-color: #EEF2FF !important;
-        color: #4338CA !important;
-    }
-
-    /* Ensure all text in white cards is dark */
-    .content-card p,
-    .content-card span,
-    .content-card div {
-        color: #374151;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -589,7 +534,7 @@ def render_header():
     with col2:
         api_online = check_api_health()
         status_class = "status-badge" if api_online else "status-badge status-offline"
-        status_text = "System Online" if api_online else "System Offline"
+        status_text = "Online" if api_online else "Offline"
         st.markdown(f'''
         <div class="{status_class}">
             <span class="status-dot"></span>
@@ -603,28 +548,31 @@ def render_header():
 def render_intake_form() -> Optional[Dict[str, Any]]:
     """Render the intake assessment form."""
 
-    st.markdown('<div class="content-card">', unsafe_allow_html=True)
-
     with st.form("assessment_form", clear_on_submit=False):
         # System Information Section
-        st.markdown("## 📋 System Information")
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.markdown("## System Information")
 
         col1, col2 = st.columns(2)
         with col1:
             system_name = st.text_input(
                 "AI System Name",
-                placeholder="e.g., Resume Screening Tool",
+                value="",
+                placeholder="Enter system name",
                 help="The name of your AI system"
             )
         with col2:
             team_name = st.text_input(
                 "Team / Department",
+                value="Engineering",
                 placeholder="e.g., HR Technology",
                 help="The team responsible for this system"
             )
+        st.markdown('</div>', unsafe_allow_html=True)
 
         # Scope Section
-        st.markdown("## 🎯 Scope")
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.markdown("## Scope")
 
         sector = st.selectbox(
             "What sector does this AI system operate in?",
@@ -643,6 +591,7 @@ def render_intake_form() -> Optional[Dict[str, Any]]:
                 "logistics",
                 "other"
             ],
+            index=0,
             format_func=lambda x: {
                 "hiring": "Hiring / Recruitment",
                 "credit_scoring": "Credit Scoring / Financial",
@@ -662,13 +611,16 @@ def render_intake_form() -> Optional[Dict[str, Any]]:
 
         use_case = st.text_area(
             "Describe what your AI system does",
-            placeholder="Briefly describe the purpose, functionality, and how decisions are made...",
-            height=120,
+            value="",
+            placeholder="Briefly describe the purpose and functionality...",
+            height=100,
             help="Provide details about the system's purpose and decision-making process"
         )
+        st.markdown('</div>', unsafe_allow_html=True)
 
         # Data Section
-        st.markdown("## 🔒 Data Collection")
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.markdown("## Data Collection")
 
         data_types = st.multiselect(
             "What types of data does the system process?",
@@ -689,7 +641,7 @@ def render_intake_form() -> Optional[Dict[str, Any]]:
             ],
             default=["generic_pii"],
             format_func=lambda x: {
-                "biometrics": "Biometric Data (face, fingerprint, voice)",
+                "biometrics": "Biometric Data",
                 "health_data": "Health / Medical Data",
                 "financial_data": "Financial Data",
                 "criminal_records": "Criminal Records",
@@ -697,17 +649,19 @@ def render_intake_form() -> Optional[Dict[str, Any]]:
                 "religious_beliefs": "Religious Beliefs",
                 "ethnic_origin": "Ethnic Origin",
                 "location_data": "Location Data",
-                "behavioral_data": "Behavioral / Usage Data",
+                "behavioral_data": "Behavioral Data",
                 "employment_data": "Employment Data",
                 "educational_records": "Educational Records",
                 "generic_pii": "Generic Personal Information",
-                "anonymous_data": "Anonymous / Aggregated Data Only"
+                "anonymous_data": "Anonymous Data Only"
             }.get(x, x),
             help="Select all data types that apply"
         )
+        st.markdown('</div>', unsafe_allow_html=True)
 
         # Impact Section
-        st.markdown("## 👥 Impact Assessment")
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.markdown("## Impact Assessment")
 
         col1, col2 = st.columns(2)
 
@@ -724,11 +678,11 @@ def render_intake_form() -> Optional[Dict[str, Any]]:
                     "students",
                     "consumers"
                 ],
-                default=["general_public"],
+                default=["employees"],
                 format_func=lambda x: {
                     "general_public": "General Public",
                     "employees": "Employees",
-                    "children": "Children (under 18)",
+                    "children": "Children",
                     "elderly": "Elderly",
                     "vulnerable_groups": "Vulnerable Groups",
                     "patients": "Patients",
@@ -752,23 +706,25 @@ def render_intake_form() -> Optional[Dict[str, Any]]:
                     "recommendations",
                     "operational_efficiency"
                 ],
-                default=["recommendations"],
+                default=["employment_decisions"],
                 format_func=lambda x: {
                     "employment_decisions": "Employment Decisions",
                     "credit_decisions": "Credit / Loan Decisions",
                     "access_to_services": "Access to Services",
                     "educational_outcomes": "Educational Outcomes",
                     "health_treatment": "Health Treatment",
-                    "legal_decisions": "Legal / Court Decisions",
-                    "law_enforcement_actions": "Law Enforcement Actions",
-                    "safety_critical": "Safety-Critical Operations",
+                    "legal_decisions": "Legal Decisions",
+                    "law_enforcement_actions": "Law Enforcement",
+                    "safety_critical": "Safety-Critical",
                     "recommendations": "Recommendations Only",
-                    "operational_efficiency": "Internal Operations Only"
+                    "operational_efficiency": "Internal Operations"
                 }.get(x, x)
             )
+        st.markdown('</div>', unsafe_allow_html=True)
 
         # Oversight Section
-        st.markdown("## 👤 Human Oversight")
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.markdown("## Human Oversight")
 
         oversight_level = st.radio(
             "What level of human oversight exists?",
@@ -792,20 +748,21 @@ def render_intake_form() -> Optional[Dict[str, Any]]:
 
         col1, col2 = st.columns(2)
         with col1:
-            can_opt_out = st.checkbox("Users can opt out of AI processing")
+            can_opt_out = st.checkbox("Users can opt out of AI processing", value=True)
         with col2:
-            has_appeal = st.checkbox("Appeal mechanism exists for decisions")
+            has_appeal = st.checkbox("Appeal mechanism exists for decisions", value=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
         # Submit
-        st.markdown("")  # Spacing
-        submitted = st.form_submit_button("🔍 Assess Compliance", use_container_width=True)
+        st.markdown("")
+        submitted = st.form_submit_button("Assess Compliance", use_container_width=True)
 
         if submitted:
             if not system_name:
-                st.error("⚠️ Please provide a system name")
+                st.error("Please provide a system name")
                 return None
             if not use_case or len(use_case) < 20:
-                st.error("⚠️ Please provide a detailed use case description (at least 20 characters)")
+                st.error("Please provide a detailed use case description (at least 20 characters)")
                 return None
 
             return {
@@ -833,14 +790,11 @@ def render_intake_form() -> Optional[Dict[str, Any]]:
                 }
             }
 
-    st.markdown('</div>', unsafe_allow_html=True)
     return None
 
 
 def render_results(result: Dict[str, Any]):
     """Render the assessment results."""
-
-    st.markdown('<div class="content-card">', unsafe_allow_html=True)
 
     # Score Section
     risk_score = result.get("risk_score", 0.5)
@@ -868,22 +822,24 @@ def render_results(result: Dict[str, Any]):
     """, unsafe_allow_html=True)
 
     # Summary
-    st.markdown("## 📊 Executive Summary")
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.markdown("## Executive Summary")
     summary = result.get("executive_summary", "Assessment complete.")
     st.markdown(f'<div class="summary-box">{summary}</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
     # Article Violations
-    st.markdown("## ⚖️ EU AI Act Article Analysis")
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.markdown("## EU AI Act Article Analysis")
 
     risk_factors = result.get("risk_factors", [])
     obligations = result.get("obligations", [])
 
-    # Collect all article-related findings
     findings = []
 
     for factor in risk_factors:
         weight = factor.get("weight", 0)
-        if weight < 0:  # Skip negative weights (safeguards)
+        if weight < 0:
             continue
         article_ref = factor.get("article_reference", "")
         description = factor.get("description", "")
@@ -911,13 +867,11 @@ def render_results(result: Dict[str, Any]):
                 "score": 80
             })
 
-    # Sort by severity then score
     severity_order = {"high": 0, "medium": 1, "low": 2}
     findings.sort(key=lambda x: (severity_order.get(x["severity"], 2), -x["score"]))
 
-    # Display findings
     if findings:
-        for finding in findings[:8]:  # Limit to top 8
+        for finding in findings[:8]:
             severity = finding["severity"]
             st.markdown(f"""
             <div class="violation-card {severity}">
@@ -929,12 +883,14 @@ def render_results(result: Dict[str, Any]):
             </div>
             """, unsafe_allow_html=True)
     else:
-        st.markdown('<div class="info-card">✅ No specific article violations identified.</div>', unsafe_allow_html=True)
+        st.markdown('<div class="info-card">No specific article violations identified.</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
     # Required Actions
     recommendations = result.get("key_recommendations", [])
     if recommendations:
-        st.markdown("## ✅ Required Actions")
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.markdown("## Required Actions")
 
         actions_html = '<div class="action-list">'
         for i, rec in enumerate(recommendations, 1):
@@ -947,13 +903,16 @@ def render_results(result: Dict[str, Any]):
         actions_html += '</div>'
 
         st.markdown(actions_html, unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
     # Documentation Gaps
     gaps = result.get("documentation_gaps", [])
     if gaps:
-        st.markdown("## 📄 Missing Documentation")
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.markdown("## Missing Documentation")
         for gap in gaps:
-            st.markdown(f'<div class="info-card">⚠️ {gap}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="info-card">{gap}</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
     # Actions
     st.markdown("---")
@@ -962,7 +921,7 @@ def render_results(result: Dict[str, Any]):
 
     with col1:
         st.download_button(
-            "📥 Download Report",
+            "Download Report",
             json.dumps(result, indent=2),
             f"ai_audit_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
             "application/json",
@@ -970,10 +929,8 @@ def render_results(result: Dict[str, Any]):
         )
 
     with col3:
-        if st.button("🔄 New Assessment", use_container_width=True):
+        if st.button("New Assessment", use_container_width=True):
             st.rerun()
-
-    st.markdown('</div>', unsafe_allow_html=True)
 
 
 def main():
@@ -983,7 +940,7 @@ def main():
     intake_data = render_intake_form()
 
     if intake_data:
-        with st.spinner("🔍 Analyzing compliance..."):
+        with st.spinner("Analyzing compliance..."):
             result = assess_intake(intake_data)
             if result:
                 render_results(result)
