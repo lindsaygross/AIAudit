@@ -1,23 +1,21 @@
 """
-Dataset builder for AIAudit.
+Dataset builder for AIAudit using AIReg-Bench.
 
-This script automatically clones or pulls the AIReg-Bench dataset repository
-and constructs a supervised CSV file for training the risk classification model.
+This script parses the full AIReg-Bench dataset which contains:
+- 5 EU AI Act Articles (9, 10, 12, 14, 15)
+- 3 Scenarios per article (A=Compliance, B=Violation_1, C=Violation_2)
+- 10 Intended Use Cases
+- 2 AI Systems per use case
+- Human compliance annotations (1-5 scale)
+
+Total: 300 documentation files with compliance scores.
+
+Based on the paper: "AIReg-Bench: Benchmarking Language Models That Assess AI Regulation Compliance"
 
 Usage:
     python src/data/build_dataset.py
-
-The script:
-1. Clones (or pulls) AIReg-Bench from GitHub
-2. Reads technical documents and human annotations
-3. Computes median compliance scores
-4. Buckets into risk labels: high (≤2), medium (=3), low (≥4)
-5. Saves data/aireg_supervised.csv
-
-No cloud credentials required - runs entirely locally via git.
 """
 
-import json
 import os
 import subprocess
 import sys
@@ -25,6 +23,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
+import numpy as np
 
 # Add project root to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -32,34 +31,44 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from src.utils.config import load_config, get_project_root
 
 
+# Map scenario letters to documentation file types
+SCENARIO_TO_FILE = {
+    "A": "Compliance.txt",
+    "B": "Violation_1.txt",
+    "C": "Violation_2.txt"
+}
+
+# Article numbers in the dataset
+ARTICLES = ["Article9", "Article10", "Article12", "Article14", "Article15"]
+
+# 10 intended uses from the paper
+INTENDED_USES = {
+    1: "AI system for road traffic safety management",
+    2: "AI system for gas supply infrastructure safety",
+    3: "AI system for evaluating learning outcomes in education",
+    4: "AI system for monitoring student behavior during tests",
+    5: "AI system for recruitment and job application filtering",
+    6: "AI system for employment termination decisions",
+    7: "AI system for credit scoring and creditworthiness",
+    8: "AI system for emergency response dispatching",
+    9: "AI system for judicial research and law application",
+    10: "AI system for election influence and voting behavior"
+}
+
+
 def clone_or_pull_repo(repo_url: str, local_path: str) -> str:
-    """
-    Clone the AIReg-Bench repository if not present, or pull updates if it exists.
-
-    Args:
-        repo_url: Git URL of the repository to clone.
-        local_path: Local path where the repository should be cloned.
-
-    Returns:
-        The commit SHA of the current HEAD after clone/pull.
-
-    Raises:
-        subprocess.CalledProcessError: If git commands fail.
-    """
+    """Clone or pull the AIReg-Bench repository."""
     local_path = Path(local_path)
     project_root = get_project_root()
     full_path = project_root / local_path
 
-    # Ensure parent directories exist
     full_path.parent.mkdir(parents=True, exist_ok=True)
 
     if not full_path.exists():
         print(f"Cloning AIReg-Bench repository to {full_path}...")
         subprocess.run(
             ["git", "clone", repo_url, str(full_path)],
-            check=True,
-            capture_output=True,
-            text=True
+            check=True, capture_output=True, text=True
         )
         print("Clone complete.")
     else:
@@ -67,371 +76,196 @@ def clone_or_pull_repo(repo_url: str, local_path: str) -> str:
         try:
             subprocess.run(
                 ["git", "-C", str(full_path), "pull"],
-                check=True,
-                capture_output=True,
-                text=True
+                check=True, capture_output=True, text=True
             )
             print("Pull complete.")
         except subprocess.CalledProcessError as e:
             print(f"Warning: Could not pull updates: {e.stderr}")
-            print("Continuing with existing local copy...")
 
-    # Get current commit SHA
     result = subprocess.run(
         ["git", "-C", str(full_path), "rev-parse", "HEAD"],
-        capture_output=True,
-        text=True
+        capture_output=True, text=True
     )
-    commit_sha = result.stdout.strip() if result.returncode == 0 else "unknown"
-
-    return commit_sha
+    return result.stdout.strip() if result.returncode == 0 else "unknown"
 
 
-def load_annotations(repo_path: Path) -> Optional[pd.DataFrame]:
+def load_human_annotations(repo_path: Path) -> Dict[str, Dict[int, float]]:
     """
-    Load human annotations from the AIReg-Bench repository.
-
-    Searches for annotation files in common locations within the repository.
-
-    Args:
-        repo_path: Path to the cloned AIReg-Bench repository.
+    Load human annotations from Excel file.
 
     Returns:
-        DataFrame with annotations, or None if not found.
+        Dict mapping "Art{N}/Scenario{X}" to {use_num: compliance_score}
     """
-    # Possible annotation file locations
-    annotation_paths = [
-        repo_path / "human_annotations.xlsx",
-        repo_path / "data" / "human_annotations.xlsx",
-        repo_path / "annotations" / "human_annotations.xlsx",
-        repo_path / "human_annotations.csv",
-        repo_path / "data" / "annotations.xlsx",
-        repo_path / "data" / "annotations.csv",
-    ]
+    excel_path = repo_path / "human_annotations.xlsx"
+    if not excel_path.exists():
+        print(f"Warning: Annotations file not found at {excel_path}")
+        return {}
 
-    for path in annotation_paths:
-        if path.exists():
-            print(f"Found annotations at: {path}")
-            if path.suffix == ".xlsx":
-                return pd.read_excel(path)
-            else:
-                return pd.read_csv(path)
+    df = pd.read_excel(excel_path)
+    annotations = {}
 
-    print("Warning: No annotation file found. Will attempt to construct from available data.")
-    return None
+    # Row 0 is header describing columns
+    # Rows 1-15 contain: Art N / Scenario X and compliance scores for each Use
+    for idx in range(1, len(df)):
+        row = df.iloc[idx]
+        first_col = df.columns[0]
+        article_scenario = str(row[first_col]).strip()
 
-
-def load_documents(repo_path: Path) -> Dict[str, Dict]:
-    """
-    Load technical documentation from the AIReg-Bench repository.
-
-    Searches for document files (JSON, TXT, MD) in the repository.
-
-    Args:
-        repo_path: Path to the cloned AIReg-Bench repository.
-
-    Returns:
-        Dictionary mapping document IDs to document metadata and content.
-    """
-    documents = {}
-
-    # Search for documents in common locations
-    doc_dirs = [
-        repo_path / "documents",
-        repo_path / "data" / "documents",
-        repo_path / "docs",
-        repo_path / "data",
-        repo_path,
-    ]
-
-    for doc_dir in doc_dirs:
-        if not doc_dir.exists():
+        if not article_scenario or article_scenario == 'nan':
             continue
 
-        # Look for JSON files with document data
-        for json_file in doc_dir.glob("*.json"):
-            try:
-                with open(json_file, "r", encoding="utf-8") as f:
-                    data = json.load(f)
+        # Parse "Art 9 / Scenario A" format
+        if "Art" not in article_scenario:
+            continue
 
-                # Handle various JSON structures
-                if isinstance(data, list):
-                    for item in data:
-                        if isinstance(item, dict) and "doc_id" in item:
-                            documents[item["doc_id"]] = item
-                        elif isinstance(item, dict) and "id" in item:
-                            documents[item["id"]] = item
-                elif isinstance(data, dict):
-                    if "documents" in data:
-                        for doc in data["documents"]:
-                            doc_id = doc.get("doc_id") or doc.get("id", str(len(documents)))
-                            documents[doc_id] = doc
-                    elif "doc_id" in data or "id" in data:
-                        doc_id = data.get("doc_id") or data.get("id")
-                        documents[doc_id] = data
+        use_scores = {}
 
-            except (json.JSONDecodeError, KeyError) as e:
-                print(f"Warning: Could not parse {json_file}: {e}")
-                continue
+        # Find Use columns and extract compliance scores
+        for col_idx, col in enumerate(df.columns):
+            col_str = str(col)
+            if col_str.startswith("Use "):
+                try:
+                    use_num = int(col_str.replace("Use ", ""))
+                    score = row[col]
+                    if pd.notna(score) and isinstance(score, (int, float)):
+                        use_scores[use_num] = float(score)
+                except (ValueError, TypeError):
+                    continue
 
-        # Also look for markdown/text files as documents
-        for text_file in list(doc_dir.glob("*.md")) + list(doc_dir.glob("*.txt")):
-            doc_id = text_file.stem
-            if doc_id not in documents:
-                with open(text_file, "r", encoding="utf-8") as f:
-                    content = f.read()
-                documents[doc_id] = {
-                    "doc_id": doc_id,
-                    "text": content,
-                    "source_file": str(text_file)
-                }
+        if use_scores:
+            annotations[article_scenario] = use_scores
 
-    return documents
+    return annotations
 
 
-def compute_risk_label(median_score: float) -> str:
+def compute_risk_label(compliance_score: float) -> str:
     """
-    Compute risk label from median compliance score.
+    Compute risk label from compliance score.
 
-    Thresholds:
-    - median ≤ 2: high risk (poor compliance)
-    - median = 3: medium risk
-    - median ≥ 4: low risk (good compliance)
-
-    Args:
-        median_score: Median compliance score across annotators.
-
-    Returns:
-        Risk label: 'high', 'medium', or 'low'.
+    Lower compliance = higher risk:
+    - score <= 2: high risk (non-compliant)
+    - score <= 3: medium risk (partial compliance)
+    - score > 3: low risk (compliant)
     """
-    if median_score <= 2:
+    if compliance_score <= 2:
         return "high"
-    elif median_score == 3:
+    elif compliance_score <= 3:
         return "medium"
     else:
         return "low"
 
 
-def build_supervised_dataset(
-    documents: Dict[str, Dict],
-    annotations: Optional[pd.DataFrame],
-    repo_path: Path
-) -> pd.DataFrame:
+def read_documentation_file(repo_path: Path, article: str, use: int, system: int, scenario: str) -> Optional[str]:
+    """Read a documentation text file from the AIReg-Bench structure."""
+    file_name = SCENARIO_TO_FILE.get(scenario)
+    if not file_name:
+        return None
+
+    file_path = repo_path / "documentation" / article / f"Use{use}" / f"System{system}" / file_name
+
+    if file_path.exists():
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                return f.read()
+        except Exception as e:
+            print(f"Warning: Could not read {file_path}: {e}")
+
+    return None
+
+
+def build_supervised_dataset(repo_path: Path, annotations: Dict) -> pd.DataFrame:
     """
-    Build the supervised dataset from documents and annotations.
+    Build supervised dataset from all 300 AIReg-Bench documents.
 
-    Args:
-        documents: Dictionary of document metadata and content.
-        annotations: DataFrame with human annotations (optional).
-        repo_path: Path to the repository for finding additional data.
-
-    Returns:
-        DataFrame with columns: doc_id, article, intended_use, system_type,
-        text, compliance_score_median, risk_label.
+    Structure: 5 articles x 3 scenarios x 10 uses x 2 systems = 300 records
     """
     records = []
 
-    if annotations is not None and not annotations.empty:
-        # Process AIReg-Bench annotation format
-        # Format: First column is "Art X / Scenario Y", "Use N" columns contain scores
-        # Row 0 is header row with column descriptions
-        print(f"Processing {len(annotations)} annotation records...")
+    # Map article folder names to annotation format
+    article_map = {
+        "Article9": "Art 9",
+        "Article10": "Art 10",
+        "Article12": "Art 12",
+        "Article14": "Art 14",
+        "Article15": "Art 15"
+    }
 
-        # Skip header row (row 0) if it contains metadata
-        data_start = 1 if 'Compliance [1-5]' in str(annotations.iloc[0].values) else 0
+    scenario_map = {
+        "A": "Scenario A",
+        "B": "Scenario B",
+        "C": "Scenario C"
+    }
 
-        # Find "Use N" columns which contain compliance scores
-        use_cols = [col for col in annotations.columns if str(col).startswith('Use ')]
+    print(f"\nBuilding dataset from {repo_path / 'documentation'}...")
 
-        for idx in range(data_start, len(annotations)):
-            row = annotations.iloc[idx]
+    for article_folder in ARTICLES:
+        article_display = article_map[article_folder]
 
-            # First column contains Article/Scenario info
-            first_col = annotations.columns[0]
-            article_scenario = str(row[first_col]) if pd.notna(row[first_col]) else ""
+        for scenario_letter, scenario_name in scenario_map.items():
+            # Build annotation key like "Art 9 / Scenario A"
+            annotation_key = f"{article_display} / {scenario_name}"
+            use_scores = annotations.get(annotation_key, {})
 
-            if not article_scenario or article_scenario == 'nan':
-                continue
+            for use_num in range(1, 11):
+                for system_num in [1, 2]:
+                    text = read_documentation_file(
+                        repo_path, article_folder, use_num, system_num, scenario_letter
+                    )
 
-            # Parse article from "Art X / Scenario Y" format
-            article = ""
-            if "Art" in article_scenario:
-                parts = article_scenario.split("/")
-                article_part = parts[0].strip()
-                # Convert "Art 9" to "Article_9"
-                article = article_part.replace("Art ", "Article_").replace(" ", "")
+                    if not text:
+                        continue
 
-            # Collect compliance scores from "Use N" columns
-            scores = []
-            for use_col in use_cols:
-                try:
-                    score = row[use_col]
-                    if pd.notna(score) and isinstance(score, (int, float)):
-                        score_val = float(score)
-                        if 1 <= score_val <= 5:
-                            scores.append(score_val)
-                except (ValueError, TypeError):
-                    continue
+                    # Get compliance score for this use case
+                    # If we have annotation, use it; otherwise infer from scenario
+                    if use_num in use_scores:
+                        compliance_score = use_scores[use_num]
+                    else:
+                        # Infer from scenario type
+                        if scenario_letter == "A":  # Compliance scenario
+                            compliance_score = 4.5
+                        elif scenario_letter == "B":  # Violation 1
+                            compliance_score = 2.0
+                        else:  # Violation 2
+                            compliance_score = 1.5
 
-            if not scores:
-                continue
+                    risk_label = compute_risk_label(compliance_score)
 
-            # Compute median score
-            sorted_scores = sorted(scores)
-            median_score = sorted_scores[len(sorted_scores) // 2]
+                    # Create unique document ID
+                    doc_id = f"{article_folder}_Use{use_num}_Sys{system_num}_{scenario_letter}"
 
-            # Get text from the "Compliance [Text]" columns (Unnamed columns after Use N)
-            text_parts = []
-            for col in annotations.columns:
-                col_str = str(col)
-                if 'Unnamed' in col_str:
-                    # Check if this might be a text column (after a Use column)
-                    val = row[col]
-                    if pd.notna(val) and isinstance(val, str) and len(val) > 50:
-                        text_parts.append(val)
+                    intended_use = INTENDED_USES.get(use_num, f"Use case {use_num}")
 
-            # Combine text parts or use article description
-            if text_parts:
-                text = " ".join(text_parts[:2])  # Take first 2 text explanations
-            else:
-                text = f"AI system documentation for {article_scenario}. Compliance assessment scenario."
-
-            doc_id = f"aireg_{idx:03d}_{article}"
-
-            records.append({
-                "doc_id": doc_id,
-                "article": article,
-                "intended_use": article_scenario,
-                "system_type": "High-risk AI system",
-                "text": text,
-                "compliance_score_median": median_score,
-                "risk_label": compute_risk_label(median_score)
-            })
-
-    else:
-        # No annotations - create synthetic dataset from documents
-        print("No annotations found. Creating dataset from documents...")
-
-        for doc_id, doc_data in documents.items():
-            text = doc_data.get("text", doc_data.get("content", ""))
-
-            if not text:
-                continue
-
-            # Assign synthetic scores based on document characteristics
-            # This is a heuristic for demonstration purposes
-            text_lower = text.lower()
-
-            # Simple heuristics for risk assessment
-            risk_keywords = {
-                "high": ["biometric", "criminal", "social scoring", "manipulation",
-                         "exploit", "subliminal", "real-time", "law enforcement"],
-                "medium": ["employment", "education", "credit", "essential services",
-                           "migration", "asylum", "justice"],
-                "low": ["spam", "video games", "inventory", "scheduling"]
-            }
-
-            assigned_risk = "medium"  # Default
-            for risk_level, keywords in risk_keywords.items():
-                if any(kw in text_lower for kw in keywords):
-                    assigned_risk = risk_level
-                    break
-
-            # Map risk to median score
-            score_map = {"high": 2.0, "medium": 3.0, "low": 4.0}
-
-            records.append({
-                "doc_id": doc_id,
-                "article": doc_data.get("article", ""),
-                "intended_use": doc_data.get("intended_use", ""),
-                "system_type": doc_data.get("system_type", ""),
-                "text": text,
-                "compliance_score_median": score_map[assigned_risk],
-                "risk_label": assigned_risk
-            })
-
-    # If still no records, create minimal synthetic dataset for testing
-    if not records:
-        print("Warning: No documents found. Creating minimal synthetic dataset for testing...")
-        synthetic_docs = [
-            {
-                "doc_id": "synthetic_001",
-                "article": "Article_9",
-                "intended_use": "Risk management demonstration",
-                "system_type": "High-risk AI system",
-                "text": "This AI system uses biometric identification for real-time remote surveillance in public spaces. The system processes facial recognition data without adequate transparency measures.",
-                "compliance_score_median": 1.5,
-                "risk_label": "high"
-            },
-            {
-                "doc_id": "synthetic_002",
-                "article": "Article_10",
-                "intended_use": "Employment screening",
-                "system_type": "HR AI tool",
-                "text": "This AI tool assists in employment screening by analyzing candidate resumes and predicting job performance. Training data governance and bias testing procedures are partially documented.",
-                "compliance_score_median": 3.0,
-                "risk_label": "medium"
-            },
-            {
-                "doc_id": "synthetic_003",
-                "article": "Article_12",
-                "intended_use": "Inventory management",
-                "system_type": "Logistics AI",
-                "text": "This AI system optimizes warehouse inventory levels using demand forecasting. Complete documentation of logging practices and human oversight mechanisms is provided.",
-                "compliance_score_median": 4.5,
-                "risk_label": "low"
-            },
-            {
-                "doc_id": "synthetic_004",
-                "article": "Article_14",
-                "intended_use": "Credit scoring",
-                "system_type": "Financial AI",
-                "text": "AI system for credit worthiness assessment. Partial human oversight documentation available. Some transparency gaps identified in decision explanation mechanisms.",
-                "compliance_score_median": 2.5,
-                "risk_label": "medium"
-            },
-            {
-                "doc_id": "synthetic_005",
-                "article": "Article_15",
-                "intended_use": "Healthcare diagnosis support",
-                "system_type": "Medical AI",
-                "text": "AI diagnostic support tool for medical imaging analysis. Extensive accuracy testing and robustness validation documented. Cybersecurity measures well-defined.",
-                "compliance_score_median": 4.0,
-                "risk_label": "low"
-            }
-        ]
-        records = synthetic_docs
+                    records.append({
+                        "doc_id": doc_id,
+                        "article": article_folder,
+                        "article_number": article_folder.replace("Article", ""),
+                        "scenario": scenario_letter,
+                        "scenario_type": "compliance" if scenario_letter == "A" else "violation",
+                        "use_case": use_num,
+                        "system": system_num,
+                        "intended_use": intended_use,
+                        "text": text,
+                        "compliance_score": compliance_score,
+                        "risk_label": risk_label
+                    })
 
     df = pd.DataFrame(records)
 
-    # Ensure required columns exist
-    required_cols = ["doc_id", "article", "intended_use", "system_type",
-                     "text", "compliance_score_median", "risk_label"]
-    for col in required_cols:
-        if col not in df.columns:
-            df[col] = ""
-
-    # Ensure text column contains only strings (fix for sklearn TfidfVectorizer)
+    # Ensure text is string type
     df["text"] = df["text"].fillna("").astype(str)
 
-    # Remove rows with empty text
+    # Remove empty records
     df = df[df["text"].str.strip().str.len() > 0]
 
-    return df[required_cols]
+    return df
 
 
 def main():
-    """
-    Main entry point for building the supervised dataset.
-
-    Loads configuration, clones/pulls the AIReg-Bench repository,
-    processes documents and annotations, and saves the supervised CSV.
-    """
+    """Build the supervised dataset from AIReg-Bench."""
     print("=" * 60)
-    print("AIAudit Dataset Builder")
+    print("AIAudit Dataset Builder - AIReg-Bench Parser")
     print("=" * 60)
 
-    # Load configuration
     try:
         config = load_config()
     except FileNotFoundError:
@@ -447,7 +281,6 @@ def main():
     repo_url = config["data"]["aireg_repo_url"]
     local_path = config["data"]["aireg_local_path"]
 
-    # Clone or pull the repository
     print(f"\nRepository URL: {repo_url}")
     print(f"Local path: {local_path}")
 
@@ -456,23 +289,20 @@ def main():
         print(f"Current commit: {commit_sha[:8]}...")
     except subprocess.CalledProcessError as e:
         print(f"Error with git operations: {e}")
-        print("Continuing with synthetic dataset...")
-        commit_sha = "synthetic"
+        return None
 
-    # Load documents and annotations
     repo_full_path = project_root / local_path
 
-    if repo_full_path.exists():
-        documents = load_documents(repo_full_path)
-        annotations = load_annotations(repo_full_path)
-        print(f"\nLoaded {len(documents)} documents")
-    else:
-        print("\nRepository not available. Using synthetic data.")
-        documents = {}
-        annotations = None
+    if not repo_full_path.exists():
+        print("Error: Repository not cloned properly.")
+        return None
+
+    # Load human annotations
+    annotations = load_human_annotations(repo_full_path)
+    print(f"\nLoaded annotations for {len(annotations)} article/scenario combinations")
 
     # Build supervised dataset
-    df = build_supervised_dataset(documents, annotations, repo_full_path)
+    df = build_supervised_dataset(repo_full_path, annotations)
 
     # Save to CSV
     output_path = project_root / "data" / "aireg_supervised.csv"
@@ -485,7 +315,15 @@ def main():
     print("=" * 60)
     print(f"Output file: {output_path}")
     print(f"Total records: {len(df)}")
-    print(f"\nClass distribution:")
+    print(f"\nRecords by article:")
+    for article in ARTICLES:
+        count = len(df[df["article"] == article])
+        print(f"  {article}: {count}")
+    print(f"\nRecords by scenario type:")
+    print(f"  Compliance (A): {len(df[df['scenario'] == 'A'])}")
+    print(f"  Violation 1 (B): {len(df[df['scenario'] == 'B'])}")
+    print(f"  Violation 2 (C): {len(df[df['scenario'] == 'C'])}")
+    print(f"\nRisk label distribution:")
     for label, count in df["risk_label"].value_counts().items():
         print(f"  {label}: {count} ({100 * count / len(df):.1f}%)")
 

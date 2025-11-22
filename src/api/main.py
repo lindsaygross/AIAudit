@@ -19,7 +19,7 @@ import sys
 from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -36,8 +36,14 @@ from src.api.schemas import (
     RemediationRequest,
     RemediationResponse,
 )
+from src.api.intake_schema import (
+    AISystemIntake,
+    IntakeAssessmentResponse,
+    SnapshotRecord,
+)
 from src.models.predict import load_model, predict_text
 from src.remediation.generator import generate_remediation_plan, load_templates
+from src.scoring.risk_engine import assess_intake_form
 from src.utils.config import load_config, get_project_root
 
 
@@ -50,6 +56,8 @@ class AppState:
     model_version: str = "not_loaded"
     template_version: str = "1.0.0"
     startup_time: Optional[datetime] = None
+    # Snapshot storage (in-memory for demo; use database in production)
+    snapshots: Dict[str, List[SnapshotRecord]] = {}
 
 
 state = AppState()
@@ -346,6 +354,122 @@ async def assess_and_remediate(request: RemediationRequest):
         )
 
 
+@app.post(
+    "/assess_intake",
+    response_model=IntakeAssessmentResponse,
+    tags=["Intake Assessment"],
+    summary="Assess AI system using structured intake form",
+    responses={
+        400: {"model": ErrorResponse, "description": "Invalid input"},
+    }
+)
+async def assess_intake(intake: AISystemIntake):
+    """
+    Perform comprehensive AI system assessment using structured intake form.
+
+    This is the primary endpoint for company-scale AI governance workflows.
+    It combines rule-based risk scoring with ML predictions to provide:
+    - Overall risk score and category
+    - Key risk factors breakdown
+    - Compliance obligations
+    - Documentation gaps
+    - Prioritized recommendations
+
+    Args:
+        intake: Structured AISystemIntake form with system details.
+
+    Returns:
+        IntakeAssessmentResponse with full assessment.
+    """
+    try:
+        # Get ML prediction if model is available and there's documentation text
+        ml_risk_score = None
+        if state.pipeline is not None and intake.additional_documentation:
+            project_root = get_project_root()
+            encoder_path = project_root / "artifacts" / "label_encoder.json"
+            try:
+                label, probs = predict_text(
+                    state.pipeline,
+                    intake.additional_documentation,
+                    label_encoder_path=str(encoder_path)
+                )
+                # Convert to risk score (high=1.0, medium=0.5, low=0.0)
+                ml_risk_score = probs.get("high", 0) + 0.5 * probs.get("medium", 0)
+            except Exception:
+                pass  # Fall back to rule-based only
+
+        # Generate remediation items if templates available
+        remediation_items = []
+        if state.templates and intake.additional_documentation:
+            try:
+                config = state.config.copy() if state.config else {}
+                probs = {"high": ml_risk_score or 0.5, "medium": 0.3, "low": 0.2}
+                plan = generate_remediation_plan(
+                    text=intake.use_case_description + " " + (intake.additional_documentation or ""),
+                    model_probs=probs,
+                    templates=state.templates,
+                    config=config
+                )
+                remediation_items = plan.get("items", [])
+            except Exception:
+                pass
+
+        # Perform intake assessment
+        response = assess_intake_form(
+            intake=intake,
+            ml_risk_score=ml_risk_score,
+            remediation_items=remediation_items
+        )
+
+        # Store snapshot
+        system_key = f"{intake.system_name}_{intake.team_name}"
+        if system_key not in state.snapshots:
+            state.snapshots[system_key] = []
+
+        state.snapshots[system_key].append(SnapshotRecord(
+            snapshot_id=response.assessment_id,
+            system_name=intake.system_name,
+            system_version=intake.system_version,
+            assessment_timestamp=response.assessment_timestamp,
+            risk_score=response.risk_score,
+            risk_category=response.risk_category
+        ))
+
+        return response
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "error": "IntakeAssessmentError",
+                "message": str(e),
+                "detail": None
+            }
+        )
+
+
+@app.get(
+    "/snapshots/{system_name}",
+    response_model=List[SnapshotRecord],
+    tags=["Intake Assessment"],
+    summary="Get assessment history for a system"
+)
+async def get_snapshots(system_name: str):
+    """
+    Retrieve historical assessment snapshots for an AI system.
+
+    Allows tracking of risk profile changes over time.
+    """
+    from typing import List as TypingList
+
+    matching_snapshots: TypingList[SnapshotRecord] = []
+    for key, snapshots in state.snapshots.items():
+        if system_name.lower() in key.lower():
+            matching_snapshots.extend(snapshots)
+
+    return sorted(matching_snapshots, key=lambda x: x.assessment_timestamp, reverse=True)
+
+
 @app.get(
     "/",
     tags=["System"],
@@ -358,7 +482,12 @@ async def root():
         "name": "AIAudit Lite API",
         "version": __version__,
         "docs": "/docs",
-        "health": "/health"
+        "health": "/health",
+        "endpoints": {
+            "intake_assessment": "/assess_intake",
+            "text_assessment": "/assess_and_remediate",
+            "predict": "/predict"
+        }
     }
 
 
