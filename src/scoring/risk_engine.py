@@ -172,12 +172,15 @@ def compute_base_risk_score(intake: AISystemIntake) -> Tuple[float, List[RiskFac
         ))
 
     # Calculate weighted score
-    # Formula: weighted average of top factors, modified by oversight
+    # Formula: weighted average of top factors, adjusted by oversight
     base_weights = [sector_weight, max_user_weight, max_data_weight, max_impact_weight]
     avg_base = sum(base_weights) / len(base_weights)
 
-    # Apply oversight modifier
-    risk_score = avg_base * oversight_modifier
+    # Apply oversight as additive reduction rather than multiplicative
+    # This prevents high-risk systems from being incorrectly classified as low-risk
+    # just because they have human oversight
+    oversight_reduction = (1.0 - oversight_modifier) * 0.2  # Max 20% reduction
+    risk_score = avg_base - oversight_reduction
 
     # Apply safeguard reduction
     risk_score = max(0.0, risk_score - safeguard_reduction)

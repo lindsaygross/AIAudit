@@ -19,23 +19,10 @@ import streamlit as st
 # Configuration
 API_URL = os.environ.get("API_URL", "http://127.0.0.1:8000")
 
-# EU AI Act Article Reference
-EU_AI_ACT_ARTICLES = {
-    "Article 5": "Prohibited AI Practices",
-    "Article 6": "High-Risk Classification",
-    "Article 9": "Risk Management System",
-    "Article 10": "Data Governance",
-    "Article 11": "Technical Documentation",
-    "Article 12": "Record-Keeping",
-    "Article 13": "Transparency",
-    "Article 14": "Human Oversight",
-    "Article 15": "Accuracy & Robustness"
-}
-
 # Page config
 st.set_page_config(
-    page_title="AIAudit",
-    page_icon="",
+    page_title="AIAudit - EU AI Act Compliance",
+    page_icon="⚖️",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
@@ -44,22 +31,22 @@ st.set_page_config(
 st.markdown("""
 <style>
     /* Import clean font */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
     /* Reset and base styles */
     * {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
 
-    /* Main app background - clean white */
+    /* Main app background */
     .stApp {
-        background-color: #FAFAFA;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     }
 
     /* Main container */
     .main .block-container {
-        max-width: 900px;
-        padding: 2rem 1rem 4rem 1rem;
+        max-width: 1200px;
+        padding: 3rem 2rem;
         margin: 0 auto;
     }
 
@@ -67,19 +54,21 @@ st.markdown("""
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
+    .stDeployButton {visibility: hidden;}
 
-    /* Typography */
+    /* Typography - Light text on dark gradient background */
     h1 {
-        color: #111827 !important;
+        color: #FFFFFF !important;
         font-weight: 700 !important;
-        font-size: 2rem !important;
-        margin-bottom: 0.25rem !important;
+        font-size: 2.5rem !important;
+        margin-bottom: 0.5rem !important;
+        letter-spacing: -0.02em !important;
     }
 
     h2 {
-        color: #111827 !important;
+        color: #1F2937 !important;
         font-weight: 600 !important;
-        font-size: 1.25rem !important;
+        font-size: 1.5rem !important;
         margin-top: 2rem !important;
         margin-bottom: 1rem !important;
     }
@@ -87,67 +76,237 @@ st.markdown("""
     h3 {
         color: #374151 !important;
         font-weight: 600 !important;
-        font-size: 1rem !important;
+        font-size: 1.125rem !important;
         margin-top: 1.5rem !important;
         margin-bottom: 0.75rem !important;
     }
 
-    p, span, label, .stMarkdown {
-        color: #374151 !important;
-    }
-
-    /* Subtitle styling */
+    /* Subtitle styling - Light text for header area */
     .subtitle {
-        color: #6B7280;
-        font-size: 1rem;
-        margin-bottom: 2rem;
+        color: rgba(255, 255, 255, 0.9) !important;
+        font-size: 1.125rem !important;
+        font-weight: 400 !important;
+        margin-bottom: 2rem !important;
     }
 
-    /* Card component */
-    .card {
-        background: #FFFFFF;
-        border: 1px solid #E5E7EB;
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin-bottom: 1rem;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-    }
-
-    .card-header {
-        font-weight: 600;
-        color: #111827;
+    /* Status badge in header */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        color: #FFFFFF;
+        padding: 0.5rem 1rem;
+        border-radius: 24px;
         font-size: 0.875rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        margin-bottom: 1rem;
+        font-weight: 500;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        background: #10B981;
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
+    .status-offline .status-dot {
+        background: #EF4444;
+    }
+
+    /* Main content card */
+    .content-card {
+        background: #FFFFFF;
+        border-radius: 20px;
+        padding: 2.5rem;
+        margin-top: 2rem;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Form styling */
+    .stTextInput > div > div > input,
+    .stTextArea > div > div > textarea,
+    .stSelectbox > div > div,
+    .stMultiSelect > div > div {
+        background: #F9FAFB !important;
+        border: 1.5px solid #E5E7EB !important;
+        border-radius: 10px !important;
+        color: #111827 !important;
+        font-size: 0.9375rem !important;
+        padding: 0.75rem 1rem !important;
+        transition: all 0.2s ease !important;
+    }
+
+    .stTextInput > div > div > input:focus,
+    .stTextArea > div > div > textarea:focus {
+        border-color: #667eea !important;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+        background: #FFFFFF !important;
+    }
+
+    .stTextInput > div > div > input::placeholder,
+    .stTextArea > div > div > textarea::placeholder {
+        color: #9CA3AF !important;
+    }
+
+    /* Labels - Dark text on white background */
+    .stTextInput > label,
+    .stTextArea > label,
+    .stSelectbox > label,
+    .stMultiSelect > label,
+    .stRadio > label,
+    .stCheckbox > label {
+        color: #374151 !important;
+        font-weight: 500 !important;
+        font-size: 0.9375rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+
+    /* Radio buttons */
+    .stRadio > div {
+        gap: 0.5rem;
+    }
+
+    .stRadio > div > label {
+        background: #F9FAFB !important;
+        border: 1.5px solid #E5E7EB !important;
+        border-radius: 10px !important;
+        padding: 0.875rem 1rem !important;
+        margin: 0.25rem 0 !important;
+        color: #374151 !important;
+        transition: all 0.2s ease !important;
+    }
+
+    .stRadio > div > label:hover {
+        background: #F3F4F6 !important;
+        border-color: #667eea !important;
+    }
+
+    .stRadio > div > label[data-checked="true"] {
+        background: #EEF2FF !important;
+        border-color: #667eea !important;
+        color: #4338CA !important;
+    }
+
+    /* Checkboxes */
+    .stCheckbox {
+        margin-top: 0.5rem;
+    }
+
+    .stCheckbox > label {
+        color: #374151 !important;
+        font-weight: 400 !important;
+    }
+
+    /* Primary button */
+    .stButton > button[kind="primary"],
+    .stButton > button:not([kind]) {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: #FFFFFF !important;
+        border: none !important;
+        border-radius: 10px !important;
+        padding: 0.875rem 2rem !important;
+        font-weight: 600 !important;
+        font-size: 1rem !important;
+        transition: all 0.2s ease !important;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3) !important;
+    }
+
+    .stButton > button[kind="primary"]:hover,
+    .stButton > button:not([kind]):hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4) !important;
+    }
+
+    .stButton > button[kind="primary"]:active,
+    .stButton > button:not([kind]):active {
+        transform: translateY(0);
+    }
+
+    /* Download button */
+    .stDownloadButton > button {
+        background: #FFFFFF !important;
+        color: #374151 !important;
+        border: 1.5px solid #E5E7EB !important;
+        border-radius: 10px !important;
+        padding: 0.875rem 2rem !important;
+        font-weight: 500 !important;
+        font-size: 1rem !important;
+        transition: all 0.2s ease !important;
+    }
+
+    .stDownloadButton > button:hover {
+        background: #F9FAFB !important;
+        border-color: #667eea !important;
+        color: #667eea !important;
     }
 
     /* Score display */
     .score-container {
-        background: #FFFFFF;
-        border: 1px solid #E5E7EB;
-        border-radius: 16px;
-        padding: 2rem;
+        background: linear-gradient(135deg, #F9FAFB 0%, #FFFFFF 100%);
+        border: 2px solid #E5E7EB;
+        border-radius: 20px;
+        padding: 3rem 2rem;
         text-align: center;
-        margin: 1.5rem 0;
+        margin: 2rem 0;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .score-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
     }
 
     .score-value {
-        font-size: 3.5rem;
+        font-size: 4rem;
         font-weight: 700;
         line-height: 1;
-        margin-bottom: 0.5rem;
+        margin-bottom: 1rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
     }
 
-    .score-high { color: #DC2626; }
-    .score-medium { color: #D97706; }
-    .score-low { color: #059669; }
+    .score-value.high-risk {
+        background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .score-value.medium-risk {
+        background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .score-value.low-risk {
+        background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
 
     .score-label {
         display: inline-block;
-        padding: 0.375rem 1rem;
-        border-radius: 9999px;
-        font-size: 0.75rem;
+        padding: 0.5rem 1.5rem;
+        border-radius: 24px;
+        font-size: 0.875rem;
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.05em;
@@ -168,28 +327,49 @@ st.markdown("""
         color: #059669;
     }
 
+    /* Summary box */
+    .summary-box {
+        background: linear-gradient(135deg, #F9FAFB 0%, #FFFFFF 100%);
+        border: 1.5px solid #E5E7EB;
+        border-radius: 12px;
+        padding: 1.5rem;
+        color: #374151;
+        font-size: 1rem;
+        line-height: 1.7;
+        margin: 1.5rem 0;
+    }
+
     /* Article violation cards */
     .violation-card {
         background: #FFFFFF;
-        border: 1px solid #E5E7EB;
-        border-radius: 8px;
-        padding: 1rem 1.25rem;
-        margin-bottom: 0.75rem;
+        border: 1.5px solid #E5E7EB;
+        border-radius: 12px;
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 1rem;
         display: flex;
         align-items: flex-start;
         gap: 1rem;
+        transition: all 0.2s ease;
+    }
+
+    .violation-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        transform: translateY(-2px);
     }
 
     .violation-card.high {
-        border-left: 4px solid #DC2626;
+        border-left: 4px solid #EF4444;
+        background: linear-gradient(90deg, #FEF2F2 0%, #FFFFFF 100%);
     }
 
     .violation-card.medium {
-        border-left: 4px solid #D97706;
+        border-left: 4px solid #F59E0B;
+        background: linear-gradient(90deg, #FFFBEB 0%, #FFFFFF 100%);
     }
 
     .violation-card.low {
-        border-left: 4px solid #059669;
+        border-left: 4px solid #10B981;
+        background: linear-gradient(90deg, #ECFDF5 0%, #FFFFFF 100%);
     }
 
     .violation-content {
@@ -199,22 +379,24 @@ st.markdown("""
     .violation-title {
         font-weight: 600;
         color: #111827;
-        font-size: 0.9375rem;
-        margin-bottom: 0.25rem;
+        font-size: 1rem;
+        margin-bottom: 0.375rem;
     }
 
     .violation-description {
         color: #6B7280;
-        font-size: 0.8125rem;
-        line-height: 1.5;
+        font-size: 0.875rem;
+        line-height: 1.6;
     }
 
     .violation-badge {
-        font-size: 0.75rem;
-        font-weight: 600;
-        padding: 0.25rem 0.625rem;
-        border-radius: 4px;
+        font-size: 0.875rem;
+        font-weight: 700;
+        padding: 0.5rem 0.875rem;
+        border-radius: 8px;
         white-space: nowrap;
+        min-width: 60px;
+        text-align: center;
     }
 
     .badge-high {
@@ -232,186 +414,22 @@ st.markdown("""
         color: #059669;
     }
 
-    /* Form styling */
-    .stTextInput > div > div > input,
-    .stTextArea > div > div > textarea {
-        background: #FFFFFF !important;
-        border: 1px solid #D1D5DB !important;
-        border-radius: 8px !important;
-        color: #111827 !important;
-        font-size: 0.9375rem !important;
-        padding: 0.75rem 1rem !important;
-    }
-
-    .stTextInput > div > div > input:focus,
-    .stTextArea > div > div > textarea:focus {
-        border-color: #6366F1 !important;
-        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1) !important;
-    }
-
-    .stTextInput > div > div > input::placeholder,
-    .stTextArea > div > div > textarea::placeholder {
-        color: #9CA3AF !important;
-    }
-
-    /* Labels */
-    .stTextInput > label,
-    .stTextArea > label,
-    .stSelectbox > label,
-    .stMultiSelect > label,
-    .stRadio > label {
-        color: #374151 !important;
-        font-weight: 500 !important;
-        font-size: 0.875rem !important;
-        margin-bottom: 0.375rem !important;
-    }
-
-    /* Select boxes */
-    .stSelectbox > div > div,
-    .stMultiSelect > div > div {
-        background: #FFFFFF !important;
-        border: 1px solid #D1D5DB !important;
-        border-radius: 8px !important;
-    }
-
-    .stSelectbox > div > div > div,
-    .stMultiSelect > div > div > div {
-        color: #111827 !important;
-    }
-
-    /* Radio buttons */
-    .stRadio > div {
-        background: #FFFFFF;
-        border: 1px solid #E5E7EB;
-        border-radius: 8px;
-        padding: 0.5rem;
-    }
-
-    .stRadio > div > label {
-        color: #374151 !important;
-        padding: 0.75rem 1rem !important;
-        border-radius: 6px !important;
-        margin: 0.25rem 0 !important;
-    }
-
-    .stRadio > div > label:hover {
-        background: #F9FAFB !important;
-    }
-
-    .stRadio > div > label[data-checked="true"] {
-        background: #EEF2FF !important;
-    }
-
-    /* Checkboxes */
-    .stCheckbox > label {
-        color: #374151 !important;
-    }
-
-    /* Primary button */
-    .stButton > button {
-        background: #4F46E5 !important;
-        color: #FFFFFF !important;
-        border: none !important;
-        border-radius: 8px !important;
-        padding: 0.75rem 1.5rem !important;
-        font-weight: 600 !important;
-        font-size: 0.9375rem !important;
-        transition: all 0.15s ease !important;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
-    }
-
-    .stButton > button:hover {
-        background: #4338CA !important;
-        box-shadow: 0 4px 6px rgba(79, 70, 229, 0.2) !important;
-        transform: translateY(-1px);
-    }
-
-    .stButton > button:active {
-        transform: translateY(0);
-    }
-
-    /* Download button */
-    .stDownloadButton > button {
-        background: #FFFFFF !important;
-        color: #374151 !important;
-        border: 1px solid #D1D5DB !important;
-        border-radius: 8px !important;
-        font-weight: 500 !important;
-    }
-
-    .stDownloadButton > button:hover {
-        background: #F9FAFB !important;
-        border-color: #9CA3AF !important;
-    }
-
-    /* Divider */
-    hr {
-        border: none;
-        border-top: 1px solid #E5E7EB;
-        margin: 2rem 0;
-    }
-
-    /* Status indicator */
-    .status-online {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.375rem;
-        color: #059669;
-        font-size: 0.8125rem;
-        font-weight: 500;
-    }
-
-    .status-online::before {
-        content: '';
-        width: 8px;
-        height: 8px;
-        background: #059669;
-        border-radius: 50%;
-    }
-
-    .status-offline {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.375rem;
-        color: #DC2626;
-        font-size: 0.8125rem;
-        font-weight: 500;
-    }
-
-    .status-offline::before {
-        content: '';
-        width: 8px;
-        height: 8px;
-        background: #DC2626;
-        border-radius: 50%;
-    }
-
-    /* Summary box */
-    .summary-box {
-        background: #F9FAFB;
-        border: 1px solid #E5E7EB;
-        border-radius: 8px;
-        padding: 1.25rem;
-        color: #374151;
-        font-size: 0.9375rem;
-        line-height: 1.6;
-    }
-
-    /* List styling */
+    /* Action list */
     .action-list {
         list-style: none;
         padding: 0;
-        margin: 0;
+        margin: 1rem 0;
     }
 
     .action-item {
         display: flex;
         align-items: flex-start;
-        gap: 0.75rem;
-        padding: 0.75rem 0;
+        gap: 1rem;
+        padding: 1rem;
         border-bottom: 1px solid #F3F4F6;
         color: #374151;
         font-size: 0.9375rem;
+        line-height: 1.6;
     }
 
     .action-item:last-child {
@@ -422,32 +440,112 @@ st.markdown("""
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 1.5rem;
-        height: 1.5rem;
-        background: #EEF2FF;
-        color: #4F46E5;
+        width: 2rem;
+        height: 2rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #FFFFFF;
         border-radius: 50%;
-        font-size: 0.75rem;
+        font-size: 0.875rem;
         font-weight: 600;
         flex-shrink: 0;
     }
 
-    /* Section spacing */
-    .section {
-        margin-top: 2rem;
+    /* Divider */
+    hr {
+        border: none;
+        border-top: 1.5px solid rgba(255, 255, 255, 0.3);
+        margin: 2rem 0;
     }
 
-    /* Spinner */
-    .stSpinner > div {
-        border-top-color: #4F46E5 !important;
+    .content-card hr {
+        border-top: 1.5px solid #E5E7EB;
     }
 
     /* Form container */
     [data-testid="stForm"] {
-        background: #FFFFFF;
-        border: 1px solid #E5E7EB;
+        background: transparent;
+        border: none;
+        padding: 0;
+    }
+
+    /* Spinner */
+    .stSpinner > div {
+        border-top-color: #667eea !important;
+    }
+
+    /* Section headers */
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin: 2rem 0 1rem 0;
+    }
+
+    .section-icon {
+        width: 32px;
+        height: 32px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.125rem;
+    }
+
+    /* Info cards */
+    .info-card {
+        background: #F9FAFB;
+        border: 1.5px solid #E5E7EB;
         border-radius: 12px;
-        padding: 1.5rem;
+        padding: 1rem 1.25rem;
+        color: #374151;
+        font-size: 0.875rem;
+        line-height: 1.6;
+        margin: 1rem 0;
+    }
+
+    .info-card strong {
+        color: #111827;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .main .block-container {
+            padding: 2rem 1rem;
+        }
+
+        h1 {
+            font-size: 2rem !important;
+        }
+
+        .score-value {
+            font-size: 3rem;
+        }
+
+        .content-card {
+            padding: 1.5rem;
+        }
+    }
+
+    /* Select dropdown text - ensure dark text */
+    [data-baseweb="select"] > div,
+    [data-baseweb="select"] span,
+    .stSelectbox div[data-baseweb="select"] div {
+        color: #111827 !important;
+    }
+
+    /* Multi-select tags */
+    [data-baseweb="tag"] {
+        background-color: #EEF2FF !important;
+        color: #4338CA !important;
+    }
+
+    /* Ensure all text in white cards is dark */
+    .content-card p,
+    .content-card span,
+    .content-card div {
+        color: #374151;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -482,7 +580,7 @@ def assess_intake(intake_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
 
 def render_header():
     """Render the application header."""
-    col1, col2 = st.columns([4, 1])
+    col1, col2 = st.columns([3, 1])
 
     with col1:
         st.markdown("# AIAudit")
@@ -490,33 +588,43 @@ def render_header():
 
     with col2:
         api_online = check_api_health()
-        if api_online:
-            st.markdown('<span class="status-online">System Online</span>', unsafe_allow_html=True)
-        else:
-            st.markdown('<span class="status-offline">System Offline</span>', unsafe_allow_html=True)
+        status_class = "status-badge" if api_online else "status-badge status-offline"
+        status_text = "System Online" if api_online else "System Offline"
+        st.markdown(f'''
+        <div class="{status_class}">
+            <span class="status-dot"></span>
+            <span>{status_text}</span>
+        </div>
+        ''', unsafe_allow_html=True)
+
+    st.markdown("---")
 
 
 def render_intake_form() -> Optional[Dict[str, Any]]:
     """Render the intake assessment form."""
 
+    st.markdown('<div class="content-card">', unsafe_allow_html=True)
+
     with st.form("assessment_form", clear_on_submit=False):
         # System Information Section
-        st.markdown("## System Information")
+        st.markdown("## 📋 System Information")
 
         col1, col2 = st.columns(2)
         with col1:
             system_name = st.text_input(
                 "AI System Name",
-                placeholder="e.g., Resume Screening Tool"
+                placeholder="e.g., Resume Screening Tool",
+                help="The name of your AI system"
             )
         with col2:
             team_name = st.text_input(
                 "Team / Department",
-                placeholder="e.g., HR Technology"
+                placeholder="e.g., HR Technology",
+                help="The team responsible for this system"
             )
 
         # Scope Section
-        st.markdown("## Scope")
+        st.markdown("## 🎯 Scope")
 
         sector = st.selectbox(
             "What sector does this AI system operate in?",
@@ -555,11 +663,12 @@ def render_intake_form() -> Optional[Dict[str, Any]]:
         use_case = st.text_area(
             "Describe what your AI system does",
             placeholder="Briefly describe the purpose, functionality, and how decisions are made...",
-            height=100
+            height=120,
+            help="Provide details about the system's purpose and decision-making process"
         )
 
         # Data Section
-        st.markdown("## Data Collection")
+        st.markdown("## 🔒 Data Collection")
 
         data_types = st.multiselect(
             "What types of data does the system process?",
@@ -593,11 +702,12 @@ def render_intake_form() -> Optional[Dict[str, Any]]:
                 "educational_records": "Educational Records",
                 "generic_pii": "Generic Personal Information",
                 "anonymous_data": "Anonymous / Aggregated Data Only"
-            }.get(x, x)
+            }.get(x, x),
+            help="Select all data types that apply"
         )
 
         # Impact Section
-        st.markdown("## Impact Assessment")
+        st.markdown("## 👥 Impact Assessment")
 
         col1, col2 = st.columns(2)
 
@@ -658,7 +768,7 @@ def render_intake_form() -> Optional[Dict[str, Any]]:
             )
 
         # Oversight Section
-        st.markdown("## Human Oversight")
+        st.markdown("## 👤 Human Oversight")
 
         oversight_level = st.radio(
             "What level of human oversight exists?",
@@ -676,7 +786,8 @@ def render_intake_form() -> Optional[Dict[str, Any]]:
                 "human_in_the_loop": "Human reviews before each decision",
                 "human_override_possible": "Human can override any decision",
                 "human_final_decision": "Human makes all final decisions"
-            }.get(x, x)
+            }.get(x, x),
+            help="Select the level of human involvement in decisions"
         )
 
         col1, col2 = st.columns(2)
@@ -687,14 +798,14 @@ def render_intake_form() -> Optional[Dict[str, Any]]:
 
         # Submit
         st.markdown("")  # Spacing
-        submitted = st.form_submit_button("Assess Compliance", use_container_width=True)
+        submitted = st.form_submit_button("🔍 Assess Compliance", use_container_width=True)
 
         if submitted:
             if not system_name:
-                st.error("Please provide a system name")
+                st.error("⚠️ Please provide a system name")
                 return None
             if not use_case or len(use_case) < 20:
-                st.error("Please provide a detailed use case description (at least 20 characters)")
+                st.error("⚠️ Please provide a detailed use case description (at least 20 characters)")
                 return None
 
             return {
@@ -722,13 +833,14 @@ def render_intake_form() -> Optional[Dict[str, Any]]:
                 }
             }
 
+    st.markdown('</div>', unsafe_allow_html=True)
     return None
 
 
 def render_results(result: Dict[str, Any]):
     """Render the assessment results."""
 
-    st.markdown("---")
+    st.markdown('<div class="content-card">', unsafe_allow_html=True)
 
     # Score Section
     risk_score = result.get("risk_score", 0.5)
@@ -736,32 +848,32 @@ def render_results(result: Dict[str, Any]):
     risk_percentage = int(risk_score * 100)
 
     if risk_category == "high_risk":
-        score_class = "score-high"
+        score_class = "high-risk"
         label_class = "label-high"
         label_text = "HIGH RISK"
     elif risk_category == "medium_risk":
-        score_class = "score-medium"
+        score_class = "medium-risk"
         label_class = "label-medium"
         label_text = "MEDIUM RISK"
     else:
-        score_class = "score-low"
+        score_class = "low-risk"
         label_class = "label-low"
         label_text = "LOW RISK"
 
     st.markdown(f"""
     <div class="score-container">
-        <div class="score-value {score_class}">{risk_percentage}%</div>
+        <div class="score-value {score_class}">{risk_percentage}</div>
         <span class="score-label {label_class}">{label_text}</span>
     </div>
     """, unsafe_allow_html=True)
 
     # Summary
-    st.markdown("## Summary")
+    st.markdown("## 📊 Executive Summary")
     summary = result.get("executive_summary", "Assessment complete.")
     st.markdown(f'<div class="summary-box">{summary}</div>', unsafe_allow_html=True)
 
     # Article Violations
-    st.markdown("## EU AI Act Article Analysis")
+    st.markdown("## ⚖️ EU AI Act Article Analysis")
 
     risk_factors = result.get("risk_factors", [])
     obligations = result.get("obligations", [])
@@ -817,12 +929,12 @@ def render_results(result: Dict[str, Any]):
             </div>
             """, unsafe_allow_html=True)
     else:
-        st.info("No specific article violations identified.")
+        st.markdown('<div class="info-card">✅ No specific article violations identified.</div>', unsafe_allow_html=True)
 
     # Required Actions
     recommendations = result.get("key_recommendations", [])
     if recommendations:
-        st.markdown("## Required Actions")
+        st.markdown("## ✅ Required Actions")
 
         actions_html = '<div class="action-list">'
         for i, rec in enumerate(recommendations, 1):
@@ -839,9 +951,9 @@ def render_results(result: Dict[str, Any]):
     # Documentation Gaps
     gaps = result.get("documentation_gaps", [])
     if gaps:
-        st.markdown("## Missing Documentation")
+        st.markdown("## 📄 Missing Documentation")
         for gap in gaps:
-            st.markdown(f"- {gap}")
+            st.markdown(f'<div class="info-card">⚠️ {gap}</div>', unsafe_allow_html=True)
 
     # Actions
     st.markdown("---")
@@ -850,7 +962,7 @@ def render_results(result: Dict[str, Any]):
 
     with col1:
         st.download_button(
-            "Download Report",
+            "📥 Download Report",
             json.dumps(result, indent=2),
             f"ai_audit_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
             "application/json",
@@ -858,19 +970,20 @@ def render_results(result: Dict[str, Any]):
         )
 
     with col3:
-        if st.button("New Assessment", use_container_width=True):
+        if st.button("🔄 New Assessment", use_container_width=True):
             st.rerun()
+
+    st.markdown('</div>', unsafe_allow_html=True)
 
 
 def main():
     """Main application."""
     render_header()
-    st.markdown("---")
 
     intake_data = render_intake_form()
 
     if intake_data:
-        with st.spinner("Analyzing compliance..."):
+        with st.spinner("🔍 Analyzing compliance..."):
             result = assess_intake(intake_data)
             if result:
                 render_results(result)
