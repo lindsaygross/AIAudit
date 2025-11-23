@@ -1,0 +1,172 @@
+# EU AI Act Article Remediations
+# Each article has 3 remediation items with actionable engineering guidance
+
+Article_9:
+  name: "Risk Management System"
+  description: "Requirements for risk management systems in high-risk AI"
+  remediations:
+    - id: "A9-R1"
+      title: "Implement Continuous Risk Monitoring Pipeline"
+      description: |
+        Deploy automated monitoring infrastructure to track model performance
+        and detect distribution drift. Set up alerting thresholds for accuracy
+        degradation, fairness metric violations, and input data anomalies.
+        Integrate with existing observability stack (e.g., Prometheus, Grafana).
+      urgency: "high"
+      estimated_effort: "2-3 weeks"
+
+    - id: "A9-R2"
+      title: "Document Risk Identification and Mitigation Procedures"
+      description: |
+        Create comprehensive risk register documenting known risks, their
+        likelihood, potential impact, and mitigation strategies. Include
+        residual risk assessment and acceptance criteria. Update quarterly
+        or upon significant model changes.
+      urgency: "high"
+      estimated_effort: "1-2 weeks"
+
+    - id: "A9-R3"
+      title: "Establish Risk Testing and Validation Framework"
+      description: |
+        Implement automated testing suite covering adversarial inputs, edge
+        cases, and failure modes. Include stress testing for performance
+        under load and degraded conditions. Document test coverage and
+        results in compliance artifacts.
+      urgency: "medium"
+      estimated_effort: "2-4 weeks"
+
+Article_10:
+  name: "Data and Data Governance"
+  description: "Requirements for training, validation, and testing data"
+  remediations:
+    - id: "A10-R1"
+      title: "Implement Data Lineage and Provenance Tracking"
+      description: |
+        Deploy data versioning system (e.g., DVC, LakeFS) to track all
+        training data sources, transformations, and versions. Document
+        data collection procedures, consent mechanisms, and legal basis
+        for processing. Maintain immutable audit trail.
+      urgency: "high"
+      estimated_effort: "2-3 weeks"
+
+    - id: "A10-R2"
+      title: "Conduct Bias and Representativeness Audit"
+      description: |
+        Perform statistical analysis of training data to identify
+        demographic imbalances, label biases, and underrepresented
+        subgroups. Document findings and implement corrective measures
+        such as resampling, reweighting, or targeted data collection.
+      urgency: "high"
+      estimated_effort: "1-2 weeks"
+
+    - id: "A10-R3"
+      title: "Establish Data Quality Validation Pipeline"
+      description: |
+        Implement automated data quality checks including schema validation,
+        completeness checks, consistency rules, and outlier detection.
+        Set up data quality dashboards and alerting for quality degradation.
+        Document acceptable quality thresholds.
+      urgency: "medium"
+      estimated_effort: "1-2 weeks"
+
+Article_12:
+  name: "Record-Keeping"
+  description: "Requirements for automatic logging and traceability"
+  remediations:
+    - id: "A12-R1"
+      title: "Implement Comprehensive Event Logging System"
+      description: |
+        Deploy structured logging for all AI system operations including
+        inputs, outputs, confidence scores, and user interactions. Use
+        append-only storage with tamper-evident properties. Ensure logs
+        are retained for minimum required period (typically 10 years).
+      urgency: "high"
+      estimated_effort: "2-3 weeks"
+
+    - id: "A12-R2"
+      title: "Create Audit Trail for Model Decisions"
+      description: |
+        Implement decision explanation logging capturing feature
+        attributions, model version, and contextual factors for each
+        prediction. Enable reconstruction of decision rationale for
+        regulatory inquiries. Store with appropriate access controls.
+      urgency: "high"
+      estimated_effort: "2-4 weeks"
+
+    - id: "A12-R3"
+      title: "Establish Log Retention and Access Procedures"
+      description: |
+        Define and document log retention policies aligned with regulatory
+        requirements. Implement access controls ensuring logs are available
+        to authorized personnel and regulators. Create procedures for log
+        retrieval and analysis during audits.
+      urgency: "medium"
+      estimated_effort: "1 week"
+
+Article_14:
+  name: "Human Oversight"
+  description: "Requirements for human oversight measures"
+  remediations:
+    - id: "A14-R1"
+      title: "Design Human-in-the-Loop Decision Workflows"
+      description: |
+        Implement approval workflows for high-stakes decisions requiring
+        human review. Define escalation thresholds based on confidence
+        scores, risk levels, or decision impact. Create clear UI for
+        human reviewers with relevant context and override capabilities.
+      urgency: "high"
+      estimated_effort: "3-4 weeks"
+
+    - id: "A14-R2"
+      title: "Implement Real-Time Intervention Mechanisms"
+      description: |
+        Deploy emergency stop functionality allowing authorized operators
+        to halt AI system operations. Create dashboards for real-time
+        monitoring of system behavior. Implement rate limiting and circuit
+        breakers for autonomous operations.
+      urgency: "high"
+      estimated_effort: "2-3 weeks"
+
+    - id: "A14-R3"
+      title: "Document Human Oversight Roles and Training"
+      description: |
+        Define roles and responsibilities for human oversight personnel.
+        Create training materials covering system capabilities, limitations,
+        and override procedures. Maintain records of training completion
+        and periodic competency assessments.
+      urgency: "medium"
+      estimated_effort: "1-2 weeks"
+
+Article_15:
+  name: "Accuracy, Robustness, and Cybersecurity"
+  description: "Requirements for accuracy, robustness, and security"
+  remediations:
+    - id: "A15-R1"
+      title: "Implement Accuracy Benchmarking and Monitoring"
+      description: |
+        Establish baseline accuracy metrics on representative test sets.
+        Deploy continuous accuracy monitoring comparing production
+        predictions against ground truth when available. Set up automated
+        alerts for accuracy degradation beyond acceptable thresholds.
+      urgency: "high"
+      estimated_effort: "2-3 weeks"
+
+    - id: "A15-R2"
+      title: "Conduct Adversarial Robustness Testing"
+      description: |
+        Perform adversarial testing using established attack methods
+        (e.g., FGSM, PGD for ML models). Document vulnerabilities and
+        implement defensive measures such as adversarial training,
+        input validation, or ensemble methods. Retest after mitigations.
+      urgency: "high"
+      estimated_effort: "2-4 weeks"
+
+    - id: "A15-R3"
+      title: "Implement Security Controls and Incident Response"
+      description: |
+        Apply security hardening to AI system infrastructure including
+        network segmentation, access controls, and encryption. Implement
+        model integrity verification to detect tampering. Create incident
+        response procedures specific to AI system compromises.
+      urgency: "medium"
+      estimated_effort: "2-3 weeks"

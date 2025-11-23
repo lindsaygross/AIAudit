@@ -1,0 +1,26 @@
+data:
+  cloud_provider: gcs
+  gcs_bucket: aireg-bench-clean
+  gcs_blob: aireg_supervised.csv
+  text_column: text
+  label_column: risk_label
+  test_size: 0.2
+  random_state: 42
+  aireg_repo_url: "https://github.com/camlsys/aireg-bench.git"
+  aireg_local_path: "data/raw/aireg-bench"
+
+model:
+  type: logistic_regression
+  max_features: 10000
+  ngram_range: [1, 2]
+  class_weight: balanced
+  C: 1.0
+
+remediation:
+  alpha: 0.6
+  beta: 0.4
+  top_k_remediations: 3
+
+logging:
+  use_mlflow: true
+  experiment_name: aireg_risk
