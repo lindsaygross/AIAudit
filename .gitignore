@@ -224,8 +224,24 @@ data/aireg_supervised.csv
 .DS_Store
 Thumbs.db
 
-# Credentials (never commit)
+# Credentials and secrets (NEVER commit)
+.env
+.env.local
+.env.production
 credentials.json
 *.pem
 *.key
 service-account*.json
+gcp-credentials*.json
+google-credentials*.json
+aws-credentials*.json
+*-key.json
+*-secret.json
+
+# GCP specific
+application_default_credentials.json
+.gcloud/
+.config/gcloud/
+
+# Streamlit secrets
+.streamlit/secrets.toml
