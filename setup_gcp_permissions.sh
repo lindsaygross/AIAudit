@@ -1,5 +1,6 @@
 #!/bin/bash
 # Setup GCP permissions for Cloud Run deployment
+# Developed with assistance from Claude (Anthropic AI)
 #
 # Run this script to configure the necessary permissions
 

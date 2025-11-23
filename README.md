@@ -201,19 +201,45 @@ python -m src.models.train --config config.yaml
 
 ## MLflow Tracking
 
-When `logging.use_mlflow: true` in `config.yaml`:
+### Experiment Tracking with MLflow
 
+This project uses MLflow to track all training experiments, ensuring full reproducibility and experiment comparison.
+
+**Configuration** (`config.yaml`):
+```yaml
+logging:
+  use_mlflow: true
+  experiment_name: aireg_risk
+```
+
+**Launch MLflow UI**:
 ```bash
-# View experiments
 mlflow ui
 # Navigate to http://127.0.0.1:5000
 ```
 
-Logged items:
-- Hyperparameters (C, max_features, ngram_range)
-- Metrics (accuracy, macro_f1)
-- Artifacts (model, confusion matrix)
-- Dataset source commit SHA
+**Logged Information:**
+- **Hyperparameters**: C, max_features, ngram_range, class_weight, test_size
+- **Metrics**: accuracy, macro_f1, per-class precision/recall/f1-score
+- **Artifacts**: trained model, label encoder, confusion matrix, metrics JSON
+- **Dataset Version**: Git commit SHA of AIReg-Bench dataset
+
+### MLflow Screenshots
+
+**Experiments Overview:**
+![MLflow Experiments List](SCREENSHOTS/Screenshot%202025-11-22%20at%2010.29.26%20PM.png)
+
+**Run Parameters:**
+![MLflow Parameters](SCREENSHOTS/Screenshot%202025-11-22%20at%2010.29.43%20PM.png)
+
+**Run Metrics:**
+![MLflow Metrics](SCREENSHOTS/Screenshot%202025-11-22%20at%2010.29.53%20PM.png)
+
+**Run Artifacts:**
+![MLflow Artifacts](SCREENSHOTS/Screenshot%202025-11-22%20at%2010.30.11%20PM.png)
+
+**Model Details:**
+![MLflow Model Details](SCREENSHOTS/Screenshot%202025-11-22%20at%2010.31.03%20PM.png)
 
 ---
 
@@ -550,6 +576,9 @@ This project was developed as part of the AIPI 510 course at Duke University. It
 - The AIReg-Bench dataset and benchmark developed by Cambridge Machine Learning Systems Lab
 - Open-source ML and cloud infrastructure tools
 - EU AI Act regulatory framework research
+
+**Development Tools:**
+- This project was developed with assistance from Claude (Anthropic's AI assistant) for code implementation, debugging, and documentation
 
 **Disclaimer**: This is an educational project. It is not affiliated with, endorsed by, or representative of any official regulatory body.
 

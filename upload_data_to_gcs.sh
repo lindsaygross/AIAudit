@@ -1,5 +1,6 @@
 #!/bin/bash
 # Upload dataset to Google Cloud Storage
+# Developed with assistance from Claude (Anthropic AI)
 
 set -e
 

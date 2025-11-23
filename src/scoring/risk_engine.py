@@ -1,5 +1,6 @@
 """
 Rule-based risk scoring engine for AI system assessment.
+Developed with assistance from Claude (Anthropic AI).
 
 This module implements the compliance readiness scoring logic that combines
 ML predictions with rule-based heuristics based on EU AI Act categories.

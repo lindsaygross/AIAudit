@@ -1,5 +1,6 @@
 #!/bin/bash
 # Deploy AIAudit API to Google Cloud Run
+# Developed with assistance from Claude (Anthropic AI)
 #
 # Prerequisites:
 # 1. Install gcloud CLI: https://cloud.google.com/sdk/docs/install
