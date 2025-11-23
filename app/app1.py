@@ -1,6 +1,7 @@
 """
 AIAudit - EU AI Act Compliance Assessment Tool
 Beautiful, modern interface with polished design.
+Developed with assistance from Claude (Anthropic AI).
 """
 
 import os

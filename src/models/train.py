@@ -1,5 +1,6 @@
 """
 Model training module for AIAudit.
+Developed with assistance from Claude (Anthropic AI).
 
 This script trains a TF-IDF + Logistic Regression classifier for
 EU AI Act risk classification. It supports MLflow tracking and

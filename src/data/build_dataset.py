@@ -1,5 +1,6 @@
 """
 Dataset builder for AIAudit using AIReg-Bench.
+Developed with assistance from Claude (Anthropic AI).
 
 This script parses the full AIReg-Bench dataset which contains:
 - 5 EU AI Act Articles (9, 10, 12, 14, 15)

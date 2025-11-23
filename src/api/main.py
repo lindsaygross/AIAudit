@@ -1,5 +1,6 @@
 """
 FastAPI application for AIAudit.
+Developed with assistance from Claude (Anthropic AI).
 
 This module provides the REST API for EU AI Act compliance assessment
 and remediation planning. It loads the trained model and templates on
