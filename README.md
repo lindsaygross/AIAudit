@@ -2,8 +2,8 @@
 
 **AIAudit is a decision-support prototype that evaluates textual technical documentation of AI systems against EU AI Act risk signals and returns a prioritized remediation plan. Target users: product teams, AI-governance, and legal/compliance. The tool provides heuristic, auditable guidance — not legal advice.**
 
-# Authors: Lindsay Gross & Shreya Mendi
-# Website: https://aiaudit.streamlit.app/
+### Authors: Lindsay Gross & Shreya Mendi
+### Website: https://aiaudit.streamlit.app/
 
 ## Overview
 
